@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
 
   // Validate token with backend
   try {
-    await api.get('/auth/me', {
+    await api.get('/users/me', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
