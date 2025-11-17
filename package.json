@@ -1,20 +1,12 @@
 {
   "name": "deepperu",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "pnpm -r --parallel dev"
-  },
-  "keywords": [],
+  "description": "Login template with backend (NestJS) and frontend (Next.js)",
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.18.2",
-  "dependencies": {
-    "lodash": "^4.17.21"
-  },
-  "devDependencies": {
-    "jest": "^30.2.0"
+  "scripts": {
+    "install:all": "cd apps/backend && pnpm install && cd ../frontend && pnpm install",
+    "dev:backend": "cd apps/backend && pnpm run start:dev",
+    "dev:frontend": "cd apps/frontend && pnpm run dev"
   }
 }

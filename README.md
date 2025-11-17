@@ -1,73 +1,133 @@
-# DeepPeru
+# DeepPeru - Login Template
+
+Template con autenticación usando NestJS (backend) y Next.js (frontend).
+
+## Estructura del Proyecto
+
+```
+apps/
+├── backend/    # API NestJS + Prisma + PostgreSQL
+└── frontend/   # Next.js 15 + React 19 + Zustand
+```
 
 ## Requisitos
 
-- Node.js 18+
+- Node.js 20+
 - pnpm 10+
-- PostgreSQL
+- PostgreSQL 14+
 
 ## Instalación
 
+Cada proyecto es independiente. Instala las dependencias por separado:
+
+### Backend
+
 ```bash
+cd apps/backend
 pnpm install
+pnpm approve-builds  # Aprobar scripts de Prisma y NestJS
+```
+
+### Frontend
+
+```bash
+cd apps/frontend
+pnpm install
+pnpm approve-builds  # Aprobar scripts de sharp
 ```
 
 ## Configuración
 
 ### Backend
 
-Crear `apps/backend/.env`:
+1. Crear `apps/backend/.env`:
 
-Ejecutar migraciones:
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/deepperu"
+JWT_SECRET="your-secret-key"
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+GOOGLE_CALLBACK_URL="http://localhost:3000/api/auth/google/callback"
+```
+
+2. Ejecutar migraciones:
 
 ```bash
 cd apps/backend
 pnpm prisma migrate dev
+pnpm prisma generate
+```
+
+### Frontend
+
+Variables de entorno en `apps/frontend/.env.local`:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
 
 ## Desarrollo
 
-Para backend
+### Backend (puerto 3000)
 
 ```bash
-./init_backend.sh
+cd apps/backend
+pnpm run start:dev
 ```
 
-### Comandos útiles
+### Frontend (puerto 4000)
 
 ```bash
-# Generate prisma
-cd ./apps/backend
-pnpx prisma generate
+cd apps/frontend
+pnpm run dev
+```
 
-# Formatear código
-pnpm run format
+## Comandos Útiles
 
-# Verificar formato
-pnpm run format:check
+### Backend
+
+```bash
+# Generar cliente Prisma
+cd apps/backend
+pnpm prisma generate
+
+# Ver base de datos en interfaz gráfica
+pnpm prisma studio
+
+# Crear nueva migración
+pnpm prisma migrate dev --name nombre_migracion
 
 # Tests
-pnpm --filter @deepperu/backend run test
+pnpm run test
+pnpm run test:watch
+pnpm run test:e2e
 ```
 
-## Commits
-
-Usar [Conventional Commits](https://www.conventionalcommits.org/):
+### Frontend
 
 ```bash
-feat: nueva funcionalidad
-fix: corrección de bug
-docs: documentación
-style: formato de código
-refactor: refactorización
-test: tests
-chore: mantenimiento
+# Build producción
+cd apps/frontend
+pnpm run build
+pnpm run start
 ```
 
-## Estructura
+## Tecnologías
 
-```
-apps/
-├── backend/    # NestJS + Prisma
-└── frontend/   # Next.js
-```
+### Backend
+- NestJS 11
+- Prisma 6
+- PostgreSQL
+- Passport (Google OAuth)
+- JWT
+
+### Frontend
+- Next.js 15
+- React 19
+- Zustand (state management)
+- Tailwind CSS 4
+- TypeScript 5
+
+## Estructura de Base de Datos
+
+Ver modelos en `apps/backend/prisma/schema.prisma`
