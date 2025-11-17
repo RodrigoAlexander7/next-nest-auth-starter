@@ -1,0 +1,611 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// User Table with extended personal data
+/// - Leagal identity fields are not required when the user is a tourist
+model User {
+  id                String          @id @default(cuid())
+  email             String?         @unique
+  image             String?
+  /// Whether the user is active
+  isActive          Boolean         @default(true)
+  phoneId           Int?
+  /// When the record was created
+  createdAt         DateTime        @default(now())
+  /// Example: "1990-05-20T00:00:00.000Z"
+  dateOfBirth       DateTime?
+  /// National ID, Example: DNI, 12345678 in Peru, relies on nationality
+  documentNumber    String?
+  /// Exameple: John, Alvaro Raúl
+  firstName         String?
+  gender            Gender?
+  /// Example: Doe, Gómez Pérez
+  lastName          String?
+  /// Reference to Country, also used for document number
+  nationalityId     Int?
+  passportCountryId Int?
+  /// Passport number for international travel
+  passportNumber    String?         @unique
+  /// When the record was last updated
+  updatedAt         DateTime        @updatedAt
+  /// The whole name comming from OAuth providers
+  name              String
+  accounts          Account[]
+  companyAdmin      CompanyAdmin?
+  CompanyWorker     CompanyWorker[]
+  sessions          Session[]
+  systemAdmin       SystemAdmin?
+  Tourist           Tourist?
+  nationality       Country?        @relation("UserNationality", fields: [nationalityId], references: [id])
+  passportCountry   Country?        @relation("PassportCountry", fields: [passportCountryId], references: [id])
+  phone             Phone?          @relation(fields: [phoneId], references: [id])
+}
+
+model SystemAdmin {
+  id        Int      @id @default(autoincrement())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model CompanyAdmin {
+  id               Int              @id @default(autoincrement())
+  userId           String           @unique
+  createdAt        DateTime         @default(now())
+  tourismCompanyId Int
+  user             User             @relation(fields: [userId], references: [id])
+  company          TourismCompany[]
+}
+
+model Phone {
+  id        Int       @id
+  number    String
+  countryId Int
+  country   Country   @relation(fields: [countryId], references: [id])
+  Tourist   Tourist[]
+  users     User[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+/// Represents a supported language in the system.
+/// Use ISO 639-1 two-letter codes: e.g. "en", "es", "fr".
+/// This table allows linking translatable content to specific languages.
+model Language {
+  id                        Int                         @id @default(autoincrement())
+  /// ISO 639-1 code (unique)
+  /// Example: "en"
+  code                      String                      @unique
+  /// Display name for human readability
+  /// Example: "English", "Español", "日本語"
+  name                      String
+  cityTranslations          CityTranslation[]
+  countryTranslations       CountryTranslation[]
+  PackageLanguage           PackageLanguage[]
+  regionTranslations        RegionTranslation[]
+  companies                 TourismCompany[]
+  companyTranslations       TourismCompanyTranslation[]
+  Tourist                   Tourist[]
+  TouristPackage            TouristPackage[]
+  TouristPackageTranslation TouristPackageTranslation[]
+}
+
+/// Represents a tourism company (brand or organization).
+/// A company may have multiple physical installations (offices, hotels, etc.)
+/// and multilingual information via the related translation table.
+model TourismCompany {
+  id                 Int                         @id @default(autoincrement())
+  /// Commercial name of the company
+  name               String
+  /// Legal or registered business name (optional)
+  legalName          String?
+  /// Business registration number: RUC, VAT, RFC, etc.
+  registrationNumber String?
+  /// Main contact email (required)
+  email              String
+  /// Main contact phone (required)
+  phone              String
+  /// Official website
+  websiteUrl         String?
+  /// Logo URL (optional)
+  logoUrl            String?
+  /// Official registration date (legal or administrative)
+  /// Example: "2025-01-15T00:00:00.000Z"
+  registerDate       DateTime
+  /// Whether the company is active in the system
+  isActive           Boolean                     @default(true)
+  /// Average rating from users or agencies
+  rating             Float?
+  /// Default language for the company (ISO code, e.g., "en", "es")
+  languageId         Int?
+  /// When the record was created
+  createdAt          DateTime                    @default(now())
+  /// When the record was last updated
+  updatedAt          DateTime                    @updatedAt
+  adminId            Int
+  installations      CompanyInstallation[]
+  CompanyWorker      CompanyWorker[]
+  admin              CompanyAdmin                @relation(fields: [adminId], references: [id])
+  language           Language?                   @relation(fields: [languageId], references: [id])
+  translations       TourismCompanyTranslation[]
+  TouristPackage     TouristPackage[]
+}
+
+/// Stores translations for tourism companies.
+/// Only fields that vary by language are placed here (e.g. description, tagline).
+model TourismCompanyTranslation {
+  id          Int            @id @default(autoincrement())
+  companyId   Int
+  languageId  Int
+  /// Description of services, history, etc. (localized)
+  description String?
+  /// Short tagline or slogan (localized)
+  tagline     String?
+  company     TourismCompany @relation(fields: [companyId], references: [id])
+  language    Language       @relation(fields: [languageId], references: [id])
+
+  @@unique([companyId, languageId])
+}
+
+/// Represents a physical location (branch, office, hotel, etc.)
+/// Each company can have one or more installations.
+/// Includes geographic coordinates for use in Google Maps or similar apps.
+model CompanyInstallation {
+  id           Int            @id @default(autoincrement())
+  /// Installation name or label
+  /// Example: "Main Office", "Cusco Branch"
+  name         String
+  /// Address or description of the location
+  /// Example: "Av. Arequipa 1200, Miraflores"
+  address      String
+  /// Latitude coordinate for map location
+  /// Example: -16.3989
+  latitude     Float
+  /// Longitude coordinate for map location
+  /// Example: -71.5350
+  longitude    Float
+  /// Optional relation to a postal code (if structured location is used)
+  postalCodeId Int?
+  /// Relation to the parent company
+  companyId    Int
+  /// Whether this location is active
+  isActive     Boolean        @default(true)
+  /// Record creation timestamp
+  createdAt    DateTime       @default(now())
+  /// Record last update timestamp
+  updatedAt    DateTime       @updatedAt
+  company      TourismCompany @relation(fields: [companyId], references: [id])
+  postalCode   PostalCode?    @relation(fields: [postalCodeId], references: [id])
+}
+
+/// Represents a country.
+/// Supports multilingual display names via CountryTranslation.
+model Country {
+  id                   Int                  @id @default(autoincrement())
+  /// ISO 3166-1 alpha-2 code, e.g., "PE"
+  code                 String               @unique
+  /// Default (fallback) name, e.g., "Peru"
+  name                 String               @unique
+  /// International phone prefix, e.g., "+51"
+  phoneCode            String?
+  /// Currency reference
+  currencyId           Int?
+  currency             Currency?            @relation(fields: [currencyId], references: [id])
+  translations         CountryTranslation[]
+  phones               Phone[]
+  regions              Region[]
+  usersNationalities   User[]               @relation("UserNationality")
+  usersPassportCountry User[]               @relation("PassportCountry")
+}
+
+/// Country name translations, to show country names in different languages
+/// Example: "Germany" in English, "Deutschland" in German
+model CountryTranslation {
+  id         Int      @id @default(autoincrement())
+  countryId  Int
+  languageId Int
+  name       String
+  country    Country  @relation(fields: [countryId], references: [id])
+  language   Language @relation(fields: [languageId], references: [id])
+
+  @@unique([countryId, languageId])
+}
+
+/// Represents a region, state, or department.
+/// Supports multilingual names via RegionTranslation.
+model Region {
+  id           Int                 @id @default(autoincrement())
+  name         String
+  code         String?
+  countryId    Int
+  cities       City[]
+  country      Country             @relation(fields: [countryId], references: [id])
+  translations RegionTranslation[]
+}
+
+/// Region name translations
+/// to show region names in different languages
+/// Example: "Tokyo" in English, "東京" in Japanese
+model RegionTranslation {
+  id         Int      @id @default(autoincrement())
+  regionId   Int
+  languageId Int
+  name       String
+  language   Language @relation(fields: [languageId], references: [id])
+  region     Region   @relation(fields: [regionId], references: [id])
+
+  @@unique([regionId, languageId])
+}
+
+/// Represents a city.
+/// Supports multilingual display names via CityTranslation.
+model City {
+  id           Int               @id @default(autoincrement())
+  name         String
+  regionId     Int
+  region       Region            @relation(fields: [regionId], references: [id])
+  translations CityTranslation[]
+  postalCodes  PostalCode[]
+}
+
+/// City name translations
+/// for showing city names in different languages
+/// Example: "Tokyo" in English, "東京" in Japanese
+model CityTranslation {
+  id         Int      @id @default(autoincrement())
+  cityId     Int
+  languageId Int
+  name       String
+  city       City     @relation(fields: [cityId], references: [id])
+  language   Language @relation(fields: [languageId], references: [id])
+
+  @@unique([cityId, languageId])
+}
+
+/// Represents postal codes linked to cities.
+/// Useful for structuring addresses.
+model PostalCode {
+  id            Int                   @id @default(autoincrement())
+  /// Postal code (e.g., "04001")
+  code          String
+  /// Relation to the city
+  cityId        Int
+  installations CompanyInstallation[]
+  city          City                  @relation(fields: [cityId], references: [id])
+}
+
+/// Represents a currency used by one or more countries.
+/// Follows ISO 4217 codes.
+model Currency {
+  id            Int             @id @default(autoincrement())
+  /// Full currency name, e.g., "Peruvian Sol"
+  name          String
+  /// ISO 4217 code, e.g., "PEN"
+  code          String
+  /// Symbol used, e.g., "S/"
+  symbol        String?
+  countries     Country[]
+  PricingOption PricingOption[]
+  Tourist       Tourist[]
+}
+
+model Benefit {
+  id             Int            @id @default(autoincrement())
+  packageId      Int
+  iconUrl        String?
+  title          String
+  text           String?
+  order          Int?
+  createdAt      DateTime       @default(now())
+  TouristPackage TouristPackage @relation(fields: [packageId], references: [id])
+
+  @@index([packageId])
+}
+
+model CompanyWorker {
+  id             Int            @id @default(autoincrement())
+  userId         String
+  companyId      Int
+  role           String?
+  isActive       Boolean        @default(true)
+  TourismCompany TourismCompany @relation(fields: [companyId], references: [id])
+  User           User           @relation(fields: [userId], references: [id])
+  Permission     Permission[]   @relation("WorkerPermissions")
+
+  @@unique([userId, companyId])
+}
+
+model Feature {
+  id             Int            @id @default(autoincrement())
+  packageId      Int
+  category       String?
+  iconUrl        String?
+  name           String
+  description    String?
+  order          Int?
+  createdAt      DateTime       @default(now())
+  TouristPackage TouristPackage @relation(fields: [packageId], references: [id])
+
+  @@index([packageId])
+}
+
+model Itinerary {
+  id             Int             @id @default(autoincrement())
+  packageId      Int
+  title          String?
+  days           Int?
+  createdAt      DateTime        @default(now())
+  TouristPackage TouristPackage  @relation(fields: [packageId], references: [id])
+  ItineraryItem  ItineraryItem[]
+
+  @@index([packageId])
+}
+
+model ItineraryItem {
+  id          Int       @id @default(autoincrement())
+  itineraryId Int
+  dayNumber   Int
+  title       String
+  description String?
+  startTime   String?
+  endTime     String?
+  location    String?
+  latitude    Float?
+  longitude   Float?
+  order       Int?
+  Itinerary   Itinerary @relation(fields: [itineraryId], references: [id])
+
+  @@index([dayNumber])
+  @@index([itineraryId])
+}
+
+model Media {
+  id             Int            @id @default(autoincrement())
+  packageId      Int
+  type           MediaType      @default(IMAGE)
+  url            String
+  caption        String?
+  order          Int?
+  isPrimary      Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  TouristPackage TouristPackage @relation(fields: [packageId], references: [id])
+
+  @@index([packageId])
+}
+
+model PackageLanguage {
+  packageId      Int
+  languageId     Int
+  Language       Language       @relation(fields: [languageId], references: [id])
+  TouristPackage TouristPackage @relation(fields: [packageId], references: [id])
+
+  @@id([packageId, languageId])
+}
+
+model Permission {
+  id            Int             @id @default(autoincrement())
+  name          String          @unique
+  CompanyWorker CompanyWorker[] @relation("WorkerPermissions")
+}
+
+model PickupDetail {
+  id                     Int            @id @default(autoincrement())
+  packageId              Int
+  isHotelPickupAvailable Boolean        @default(false)
+  pickupRadiusKm         Float?
+  pickupAreaDescription  String?
+  pickupStartTime        String?
+  pickupEndTime          String?
+  instructions           String?
+  TouristPackage         TouristPackage @relation(fields: [packageId], references: [id])
+
+  @@index([packageId])
+}
+
+model PricingOption {
+  id              Int            @id @default(autoincrement())
+  packageId       Int
+  name            String
+  description     String?
+  currencyId      Int
+  amount          Decimal        @db.Decimal(12, 2)
+  perPerson       Boolean        @default(true)
+  minParticipants Int?
+  maxParticipants Int?
+  validFrom       DateTime?
+  validTo         DateTime?
+  isActive        Boolean        @default(true)
+  Currency        Currency       @relation(fields: [currencyId], references: [id])
+  TouristPackage  TouristPackage @relation(fields: [packageId], references: [id])
+
+  @@index([currencyId])
+  @@index([packageId])
+}
+
+model Schedule {
+  id             Int            @id @default(autoincrement())
+  packageId      Int
+  timezone       String
+  daysOfWeek     DayOfWeek[]
+  startTime      String
+  endTime        String?
+  notes          String?
+  TouristPackage TouristPackage @relation(fields: [packageId], references: [id])
+
+  @@index([packageId])
+}
+
+model Tourist {
+  id               Int       @id @default(autoincrement())
+  userId           String    @unique
+  languageId       Int?
+  currencyId       Int?
+  emergencyPhoneId Int?
+  Currency         Currency? @relation(fields: [currencyId], references: [id])
+  Phone            Phone?    @relation(fields: [emergencyPhoneId], references: [id])
+  Language         Language? @relation(fields: [languageId], references: [id])
+  User             User      @relation(fields: [userId], references: [id])
+}
+
+model TouristPackage {
+  id                        Int                         @id @default(autoincrement())
+  companyId                 Int
+  name                      String
+  description               String?
+  duration                  String?
+  type                      PackageType                 @default(GROUP)
+  difficulty                DifficultyLevel?
+  languageId                Int?
+  rating                    Float?
+  isActive                  Boolean                     @default(true)
+  minAge                    Int?
+  maxAge                    Int?
+  minParticipants           Int?
+  maxParticipants           Int?
+  meetingPoint              String?
+  meetingLatitude           Float?
+  meetingLongitude          Float?
+  endPoint                  String?
+  endLatitude               Float?
+  endLongitude              Float?
+  timezone                  String?
+  bookingCutoff             String?
+  requirements              String[]
+  safetyInfo                String?
+  additionalInfo            String?
+  cancellationPolicy        String?
+  cancellationType          CancellationPolicyType?
+  includedItems             String[]
+  excludedItems             String[]
+  accessibilityOptions      AccessibilityFeature[]
+  createdAt                 DateTime                    @default(now())
+  updatedAt                 DateTime
+  Benefit                   Benefit[]
+  Feature                   Feature[]
+  Itinerary                 Itinerary[]
+  Media                     Media[]
+  PackageLanguage           PackageLanguage[]
+  PickupDetail              PickupDetail[]
+  PricingOption             PricingOption[]
+  Schedule                  Schedule[]
+  TourismCompany            TourismCompany              @relation(fields: [companyId], references: [id])
+  Language                  Language?                   @relation(fields: [languageId], references: [id])
+  TouristPackageTranslation TouristPackageTranslation[]
+
+  @@index([companyId])
+}
+
+model TouristPackageTranslation {
+  id                 Int            @id @default(autoincrement())
+  packageId          Int
+  languageId         Int
+  name               String?
+  description        String?
+  meetingPoint       String?
+  endPoint           String?
+  additionalInfo     String?
+  cancellationPolicy String?
+  requirements       String[]
+  includedItems      String[]
+  excludedItems      String[]
+  Language           Language       @relation(fields: [languageId], references: [id])
+  TouristPackage     TouristPackage @relation(fields: [packageId], references: [id])
+
+  @@unique([packageId, languageId])
+}
+
+enum Gender {
+  /// Masculino
+  MALE
+  /// Femenino  
+  FEMALE
+  UNKN
+}
+
+enum AccessibilityFeature {
+  WHEELCHAIR_ACCESSIBLE
+  STROLLER_ACCESSIBLE
+  SERVICE_ANIMALS_ALLOWED
+  AUDIO_GUIDE_AVAILABLE
+  SIGN_LANGUAGE_AVAILABLE
+  LARGE_PRINT_MATERIAL
+  ASSISTIVE_LISTENING_SYSTEM
+  BRAILLE_MATERIAL
+  STEP_FREE_ACCESS
+  ELEVATOR_AVAILABLE
+  ACCESSIBLE_TOILET
+}
+
+enum CancellationPolicyType {
+  FLEXIBLE
+  MODERATE
+  STRICT
+  NON_REFUNDABLE
+}
+
+enum DayOfWeek {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+  SUN
+}
+
+enum DifficultyLevel {
+  EASY
+  MODERATE
+  CHALLENGING
+  HARD
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+enum PackageType {
+  GROUP
+  PRIVATE
+  SELF_GUIDED
+}
