@@ -18,7 +18,7 @@ const developerDocumentation = (app: INestApplication) => {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   // Configure CORS
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:4000',
@@ -26,7 +26,7 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
-  
+
   if (process.env.NODE_ENV !== 'production') {
     developerDocumentation(app);
   }
