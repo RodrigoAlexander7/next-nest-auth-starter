@@ -12,6 +12,13 @@ apps/
 - pnpm 10+
 - PostgreSQL 14+
 
+## Autentication Workflow (Backend)
+<img width="1840" height="771" alt="backend-auth-workflow" src="https://github.com/user-attachments/assets/3b40d425-f147-4b71-94ab-bf4080b1c939" />
+
+
+## Autentication Workflow (frontend)
+ Is just a promise yet...
+
 ## Installation
 
 Each project is independent. Install dependencies separately:
