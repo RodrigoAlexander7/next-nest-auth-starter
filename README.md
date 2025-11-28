@@ -1,178 +1,147 @@
-## Project Structure
+# 🔐 Production-Ready Auth Template: NestJS + Next.js + Prisma 7
 
-```
-apps/
-├── backend/    # API NestJS + Prisma + PostgreSQL
-└── frontend/   # Next.js 15 + React 19 + Zustand
-```
+<div align="center">
 
-## Requirements
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Prisma](https://img.shields.io/badge/Prisma-7.0.0-informational)
+![NestJS](https://img.shields.io/badge/NestJS-10.x-red)
+![Next.js](https://img.shields.io/badge/Next.js-15%2B-black)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue)
 
-- Node.js 20+
-- pnpm 10+
-- PostgreSQL 14+
+**A robust, flexible, and secure authentication boilerplate using the latest tech stack.**
 
-## Autentication Workflow (Backend)
+
+
+</div>
+
+---
+
+## 🚀 Overview
+
+This template is designed for developers who need a **solid starting point** without the headache of setting up authentication flows from scratch. Unlike complex monorepos, this project maintains a decoupled structure for maximum flexibility.
+
+It features the **latest Prisma 7**, pre-configured to work flawlessly with Docker and local environments, solving common installation issues found in other boilerplates.
+
+### Key Features
+* **🔌 Prisma 7 Ready:** Fully configured to use the latest ORM version without versioning conflicts.
+* **🛡️ HttpOnly Cookies:** Secure authentication flow (no tokens in localStorage).
+* **⚡ Next.js Server Actions:** Modern frontend data mutation without extra API routes.
+* **🐳 Dockerized:** Full containerization for Backend, Frontend, and Database.
+* **✅ Strong Validation:** Environment variables and DTOs validated with `Joi` to prevent runtime errors.
+* **📐 Decoupled Structure:** Independent backend and frontend folders for flexible deployment.
+* **🔑 Google OAuth:** Passport strategy fully implemented.
+
+---
+
+## 🧠 Authentication Workflow
+
+We believe in transparency. Here is exactly how the backend handles the OAuth flow to ensure security.
+
 <img width="1840" height="771" alt="backend-auth-workflow" src="https://github.com/user-attachments/assets/3b40d425-f147-4b71-94ab-bf4080b1c939" />
 
+---
 
-## Autentication Workflow (frontend)
- Is just a promise yet...
-
-## Installation
-
-Each project is independent. Install dependencies separately:
+## 🛠️ Tech Stack
 
 ### Backend
-
-```bash
-cd apps/backend
-pnpm install
-pnpm approve-builds  # Approve Prisma and NestJS scripts
-```
+* **Framework:** NestJS
+* **Database:** PostgreSQL with Prisma 7
+* **Auth:** Passport (Google Strategy), JWT
+* **Validation:** Joi
 
 ### Frontend
-
-```bash
-cd apps/frontend
-pnpm install
-pnpm approve-builds  # Approve sharp scripts
-```
-
-## Configuration
-
-### Backend
-
-1. Create `apps/backend/.env`:
-
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/deepperu"
-JWT_SECRET="your-secret-key"
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
-GOOGLE_CALLBACK_URL="http://localhost:3000/api/auth/google/callback"
-```
-
-2. Run migrations:
-
-```bash
-cd apps/backend
-pnpm prisma migrate dev
-pnpm prisma generate
-```
-
-### Frontend
-
-Environment variables in `apps/frontend/.env.local`:
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:3000
-```
-
-## Development
-
-### Backend (port 3000)
-
-```bash
-cd apps/backend
-pnpm run start:dev
-```
-
-### Frontend (port 4000)
-
-```bash
-cd apps/frontend
-pnpm run dev
-```
-
-## Useful Commands
-
-### Backend
-
-```bash
-# Generate Prisma client
-cd apps/backend
-pnpm prisma generate
-
-# View database in graphical interface
-pnpm prisma studio
-
-# Create new migration
-pnpm prisma migrate dev --name migration_name
-
-# Tests
-pnpm run test
-pnpm run test:watch
-pnpm run test:e2e
-```
-
-### Frontend
-
-```bash
-# Production build
-cd apps/frontend
-pnpm run build
-pnpm run start
-```
-
-## Technologies
-
-### Backend
-- NestJS 11
-- Prisma 6
-- PostgreSQL
-- Passport (Google OAuth)
-- JWT
-
-### Frontend
-- Next.js 15
-- React 19
-- Zustand (state management)
-- Tailwind CSS 4
-- TypeScript 5
-
-## Database Structure
-
-See models in `apps/backend/prisma/schema.prisma`
+* **Framework:** Next.js (App Router)
+* **Styling:** TailwindCSS
+* **State/Actions:** Server Actions
 
 ---
 
-## 🚀 Running with Docker
+## ⚡ Quick Start (Docker)
 
-### Backend
+The easiest way to run the project.
 
-Build the image:
+1.  **Clone the repository:**
+    ```bash
+    git clone [https://github.com/RodrigoAlexander7/login-template.git](https://github.com/RodrigoAlexander7/login-template.git)
+    cd login-template
+    ```
 
-```bash
-cd apps/backend
-docker build -t adopta-backend .
-```
+2.  **Environment Setup:**
+    Create `.env` files from the examples.
+    ```bash
+    cp backend/.env.example backend/.env
+    cp frontend/.env.example frontend/.env
+    ```
 
-Run the container:
+3.  **Run with Docker Compose:**
+    ```bash
+    docker-compose up -d --build
+    ```
 
-```bash
-docker run -d --name adopta-backend -p 3000:3000 adopta-backend
-```
-
-Run Prisma migrations inside the container:
-
-```bash
-docker exec -it adopta-backend pnpx prisma migrate dev
-```
+4.  **Access the App:**
+    * **Backend:** `http://localhost:3000`
+    * **Frontend:** `http://localhost:4000`
 
 ---
 
+## 🔧 Manual Installation
+
+If you prefer running it locally without Docker:
+
+### Backend
+```bash
+cd backend
+npm install
+
+# Initialize Prisma 7
+npx prisma generate
+npx prisma migrate dev
+
+npm run start:dev
+````
+
 ### Frontend
 
-Build the image:
-
 ```bash
-cd apps/frontend
-docker build -t frontend-app .
+cd frontend
+npm install
+npm run dev
 ```
 
-Run the container:
+-----
 
-```bash
-docker run -d --name frontend-app -p 4000:4000 frontend-app
-```
+## 📝 Environment Variables
+
+This project uses **Joi** to validate environment variables. The app will not start if these are missing.
+
+| Variable | Description |
+| :--- | :--- |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `JWT_SECRET` | Secret key for signing tokens |
+| `GOOGLE_CLIENT_ID` | OAuth Client ID from Google Cloud Console |
+| `GOOGLE_CLIENT_SECRET` | OAuth Client Secret |
+| `FRONTEND_URL` | URL for CORS and Cookies (e.g., `http://localhost:4000`) |
+
+-----
+
+## 🤝 Contributing
+
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+1.  Fork the Project
+2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the Branch (`git push origin feature/AmazingFeature`)
+5.  Open a Pull Request
+
+-----
+
+## ⭐️ Show your support
+
+Give a ⭐️ if this project helped you\!
+
+-----
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
