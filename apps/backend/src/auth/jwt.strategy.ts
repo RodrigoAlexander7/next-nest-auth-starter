@@ -4,10 +4,9 @@ import { PassportStrategy } from "@nestjs/passport";
 import { ConfigService } from "@nestjs/config";
 import type { Request } from "express";
 
-interface RequestWithCookies extends Request {
-  // Keep cookies present in the type but allow undefined value
-  cookies: Record<string, string> | undefined;
-}
+type RequestWithCookies = Request & {
+  cookies?: Record<string, string>;
+};
 
 // function to extract the token from cookies
 const cookieExtractor = (req: RequestWithCookies | undefined) => {

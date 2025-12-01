@@ -22,6 +22,9 @@
         "./generated/*"
       ]
     },
+    "types": [
+      "node"
+    ],
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,

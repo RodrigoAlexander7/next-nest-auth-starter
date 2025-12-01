@@ -7,7 +7,7 @@ import tseslint from 'typescript-eslint';
 export default tseslint.config(
   {
     // Ignored patterns: exclude compiled/generated files and node_modules
-    ignores: ['eslint.config.mjs', 'dist/**', 'dist/generated/**', 'generated/**', 'node_modules/**'],
+    ignores: ['test/**','eslint.config.mjs', 'dist/**', 'dist/generated/**', 'generated/**', 'node_modules/**', '**/*.spec.ts'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
