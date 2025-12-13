@@ -56,24 +56,12 @@ export async function loginWithCredentials(
 ): Promise<AuthResponse> {
   try {
     // Call backend login endpoint
-    const response = await fetch(`${BACKEND_URL}/auth/login`, {
-      method: 'POST',
+    const response = await api.post(`/auth/login`,credentials, {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(credentials),
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      return {
-        success: false,
-        error: error.message || 'Invalid credentials',
-      };
-    }
-
-    const data = await response.json();
-    const { accessToken } = data;
+    const { accessToken } = response.data
 
     // Validate token with backend
     try {
@@ -124,24 +112,13 @@ export async function registerWithCredentials(
 ): Promise<AuthResponse> {
   try {
     // Call backend register endpoint
-    const response = await fetch(`${BACKEND_URL}/auth/register`, {
-      method: 'POST',
+    const response = await api.post(`/auth/register`, data, {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data),
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      return {
-        success: false,
-        error: error.message || 'Registration failed',
-      };
-    }
-
-    const responseData = await response.json();
-    const { accessToken } = responseData;
+    const { accessToken } = response.data;
 
     // Set httpOnly cookie
     const cookiesStore = await cookies();
