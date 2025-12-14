@@ -5,7 +5,7 @@ FROM node:22.20-alpine3.21
 RUN npm install -g pnpm@latest-10
 
 # Create app directory and 
-WORKDIR app/
+WORKDIR /app
 
 # Copy package.json and package-lock.json files and install
 COPY package*.json .
